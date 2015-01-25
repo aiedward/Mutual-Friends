@@ -72,6 +72,16 @@ public class MutualFriend extends Configured implements Tool {
 	   public int get_mutual(){
 		   return mutual_friends;
 	   }
+	   
+	   @Override
+	   public boolean equals(Object obj){
+		   if(obj == null) return false;
+		   if(!(obj instanceof Suggestion)) return false;
+		   if(obj == this) return true;
+		   Suggestion b = (Suggestion)obj;
+		   if(this.get_id() == b.get_id()) return true;
+		   return false;
+	   }
    }
    
    public static class FriendSuggestions{
@@ -92,9 +102,11 @@ public class MutualFriend extends Configured implements Tool {
 	   
 	   public void add_mutual(String friend_id, int mutual){
 		   	 if(mutual == 0) return;
+		   	 Suggestion add_sug = new Suggestion(Integer.parseInt(friend_id),mutual);
+		   	 if(new_friends.contains(add_sug)) return;
 	     	 int size = new_friends.size();
 	     	 if(size < max_suggestions){
-	     		 new_friends.add(new Suggestion(Integer.parseInt(friend_id),mutual));
+	     		 new_friends.add(add_sug);
 	     	 }else{
 	     		 //Should probably keep track of max and min suggestions
 	     		 int min = Integer.MAX_VALUE;
@@ -115,7 +127,12 @@ public class MutualFriend extends Configured implements Tool {
 	     				 }
 	     			 }
 	     		 }
-	     		 if(index != -1) new_friends.set(index,(new Suggestion(Integer.parseInt(friend_id),mutual)));
+	     		 if(mutual > min){
+	     			 new_friends.set(index,add_sug);
+	     		 }
+	     		 if(mutual == min){
+	     			 if(add_sug.get_id() > min_id) new_friends.set(index,add_sug);
+	     		 }
 	     	 }
 	    }
    
@@ -124,7 +141,11 @@ public class MutualFriend extends Configured implements Tool {
     	  String str = "";
     	  for(int i = 0; i < new_friends.size(); i++){
     		  Suggestion sug = new_friends.get(i);
-    		  str = str + sug.get_id() + ",";
+    		  if(i+1 != new_friends.size()){
+    			  str = str + sug.get_id() + ",";
+    		  }else{
+    			  str = str + sug.get_id();
+    		  }
     	  }
     	  return str;
 	   }
@@ -169,19 +190,24 @@ public class MutualFriend extends Configured implements Tool {
               throws IOException, InterruptedException {        
          //This creates the sets of mutual friends
          String id = key.toString();
-		 int i = Integer.parseInt(id);
-		 int num_users = 50000;
 		 FriendSuggestions list = new FriendSuggestions();
 		 HashSet<String> my_friends = friends.get(id);
-		 for(int j = 0; j < num_users; j++){
-			 String other = Integer.toString(j);
-			 if(i!=j && !my_friends.contains(other)){
-				 HashSet<String> their_friends = friends.get(other);
-				 int numIntersection = intersection(my_friends,their_friends);
-				 list.add_mutual(other,numIntersection);
+		 //For each one of my friends
+		 for(String other: my_friends){
+			 //I get their friends
+			 HashSet<String> their_friends = friends.get(other);
+			 //For each one of their friends
+			 for(String degree: their_friends){
+				 //If we're not already friends
+				 if(!my_friends.contains(degree)){
+					 //Find our mutual friends
+					 int numIntersection = intersection(my_friends,friends.get(degree));
+					 list.add_mutual(degree,numIntersection);
+				 }
 			 }
 		 }
 		 String ordered_list = list.toString();
+		 //System.out.println(ordered_list);
 		 user_list.set(ordered_list);
          context.write(key, user_list);
       }
