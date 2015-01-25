@@ -158,16 +158,20 @@ public class MutualFriend extends Configured implements Tool {
 	   		int a_mut = a.get_mutual();
 	   		int b_mut = b.get_mutual();
 	        if(a_mut < b_mut){
+	        	//a_mut comes after b_mut in the array
 	            return 1;
 	        }
 	        if(a_mut > b_mut){
+	        	//a_mut comes before b_mut in the array
 	            return -1;
 	        }else{
 	        	//They have equal mutual friends
 	        	if(a.get_id() < b.get_id()){
-	        		return 1;
-	        	}else{
+	        		//a has a lower id, it should come before b
 	        		return -1;
+	        	}else{
+	        		//a has a higher id, it should come after b
+	        		return 1;
 	        	}
 	        }
 	    }
