@@ -138,6 +138,7 @@ public class MutualFriend extends Configured implements Tool {
    
 	   @Override
 	   public String toString(){
+		  Collections.sort(new_friends,new SuggestionComparator());
     	  String str = "";
     	  for(int i = 0; i < new_friends.size(); i++){
     		  Suggestion sug = new_friends.get(i);
@@ -149,6 +150,27 @@ public class MutualFriend extends Configured implements Tool {
     	  }
     	  return str;
 	   }
+   }
+   
+   public static class SuggestionComparator implements Comparator<Suggestion>{
+	   	@Override
+	    public int compare(Suggestion a, Suggestion b) {
+	   		int a_mut = a.get_mutual();
+	   		int b_mut = b.get_mutual();
+	        if(a_mut < b_mut){
+	            return 1;
+	        }
+	        if(a_mut > b_mut){
+	            return -1;
+	        }else{
+	        	//They have equal mutual friends
+	        	if(a.get_id() < b.get_id()){
+	        		return 1;
+	        	}else{
+	        		return -1;
+	        	}
+	        }
+	    }
    }
    
    public static class Map extends Mapper<LongWritable, Text, Text, Text> {
@@ -198,8 +220,8 @@ public class MutualFriend extends Configured implements Tool {
 			 HashSet<String> their_friends = friends.get(other);
 			 //For each one of their friends
 			 for(String degree: their_friends){
-				 //If we're not already friends
-				 if(!my_friends.contains(degree)){
+				 //If not myself and we're not already friends
+				 if(!id.equals(degree) && !my_friends.contains(degree)){
 					 //Find our mutual friends
 					 int numIntersection = intersection(my_friends,friends.get(degree));
 					 list.add_mutual(degree,numIntersection);
