@@ -183,14 +183,17 @@ public class MutualFriend extends Configured implements Tool {
     	  value_user_id.set("");
 		  String[] contents = value.toString().split("\\s+");
 		  int size = contents.length;
+		  String user_id = contents[0];
 		 //This populates each users friend list
-		 for(int i = 0; i < size-1; i=i+2) {
-			 String user_id = contents[i];
-			 String friends_list = contents[i+1];
-			 set_friends(user_id,friends_list.split(","));
-			 key_user_id.set(user_id);
-			 context.write(key_user_id,value_user_id);
-		 }
+		  if(size == 1){
+			  //User is lonely, has no friends
+			  set_friends(user_id,new String[0]);
+		  }else{
+			  String friends_list = contents[1];
+			  set_friends(user_id,friends_list.split(","));
+		  }
+		  key_user_id.set(user_id);
+		  context.write(key_user_id,value_user_id);
       }
       
      private void set_friends(String user_id, String[] separated_list){
